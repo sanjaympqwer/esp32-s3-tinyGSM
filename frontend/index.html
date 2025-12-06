@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32-S3 TTS Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, select, button { margin: 6px 0; padding: 8px; width: 100%; max-width: 400px; }
+    #log { border: 1px solid #ccc; padding: 8px; height: 200px; overflow-y: auto; max-width: 400px; }
+  </style>
+</head>
+<body>
+  <h2>ESP32-S3 TTS Control</h2>
+
+  <label>Device ID (must match the ESP32 code):</label>
+  <input id="deviceId" value="ROOM1" />
+
+  <label>Text to speak:</label>
+  <input id="msg" placeholder="Type text" />
+
+  <button id="sendBtn">Send to device</button>
+
+  <h3>Log</h3>
+  <div id="log"></div>
+
+  <script>
+    const logDiv = document.getElementById('log');
+    function log(msg) {
+      logDiv.innerHTML += msg + "<br>";
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // --- IMPORTANT: use your RENDER HOST here, not location.host ---
+    const WS_URL = "wss://esp-32-tts.onrender.com"; // change to your actual Render URL
+
+    let ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      log("🟢 WebSocket connected to backend");
+    };
+
+    ws.onclose = () => {
+      log("🔴 WebSocket closed");
+    };
+
+    ws.onerror = (e) => {
+      log("⚠ WS error");
+    };
+
+    ws.onmessage = (e) => {
+      log("📥 " + e.data);
+    };
+
+    document.getElementById('sendBtn').onclick = () => {
+      const deviceId = document.getElementById('deviceId').value.trim();
+      const text = document.getElementById('msg').value.trim();
+      if (!deviceId || !text) return;
+
+      const payload = `TO:${deviceId}:${text}`;
+      ws.send(payload);
+      log("➡ Sent: " + payload);
+    };
+  </script>
+</body>
+</html>
